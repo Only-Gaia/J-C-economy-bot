@@ -324,7 +324,9 @@ intents = discord.Intents.default()
 intents.message_content = True
 intents.members = True
 
-bot = commands.Bot(command_prefix=PREFIX, intents=intents, help_command=commands.DefaultHelpCommand())
+# help_command=None: disattiva l'help predefinito, sostituito dal comando
+# .help / /help personalizzato definito più sotto.
+bot = commands.Bot(command_prefix=PREFIX, intents=intents, help_command=None)
 
 
 @bot.event
@@ -344,7 +346,7 @@ async def on_command_error(ctx, error):
         secs = round(error.retry_after, 1)
         await ctx.send(f"⏳ Rallenta! Puoi riusare questo comando tra **{secs}s**.")
     elif isinstance(error, commands.MissingRequiredArgument):
-        await ctx.send(f"❌ Ti manca un parametro: `{error.param.name}`. Controlla `.help {ctx.command}`.")
+        await ctx.send(f"❌ Ti manca un parametro: `{error.param.name}`. Controlla `.help`.")
     elif isinstance(error, commands.BadArgument):
         await ctx.send("❌ Argomento non valido. Controlla la sintassi del comando.")
     elif isinstance(error, commands.CheckFailure):
@@ -1045,6 +1047,84 @@ async def tris(ctx: commands.Context, avversario: discord.Member = None):
     content = f"❌ {ctx.author.mention} vs ⭕ {avversario.mention if avversario else 'Bot 🤖'}\nTurno di: {ctx.author.mention}"
     message = await ctx.send(content, view=view)
     view.message = message
+
+
+# =====================================================================
+# HELP
+# =====================================================================
+
+@bot.hybrid_command(name="help", description="Mostra tutti i comandi disponibili.")
+async def help_command(ctx: commands.Context):
+    embed = discord.Embed(
+        title=f"📖 Comandi di {BOT_NAME}",
+        description=f"Prefisso: `{PREFIX}` — funzionano anche come slash command `/`",
+        color=EMBED_COLOR,
+    )
+
+    embed.add_field(
+        name="💰 Economia",
+        value=(
+            f"`{PREFIX}balance [utente]` — mostra wallet, banca e fortuna\n"
+            f"`{PREFIX}work` — lavora per guadagnare monete\n"
+            f"`{PREFIX}daily` — ricompensa giornaliera\n"
+            f"`{PREFIX}depositare <importo|all>` — deposita in banca\n"
+            f"`{PREFIX}prelevare <importo|all>` — preleva dalla banca\n"
+            f"`{PREFIX}trade <utente> <importo>` — invia monete a un utente"
+        ),
+        inline=False,
+    )
+
+    embed.add_field(
+        name="🍀 Fortuna",
+        value=(
+            f"`{PREFIX}lucky` — +1 punto fortuna (cooldown 5 min)\n"
+            f"`{PREFIX}luckybox` — box fortunata gratuita giornaliera"
+        ),
+        inline=False,
+    )
+
+    embed.add_field(
+        name="🎒 Raccolta",
+        value=(
+            f"`{PREFIX}hunt` — vai a caccia\n"
+            f"`{PREFIX}pesca` — vai a pescare\n"
+            f"`{PREFIX}mine` — vai in miniera\n"
+            f"`{PREFIX}inventory [utente]` — mostra l'inventario\n"
+            f"`{PREFIX}sell <oggetto> [quantità]` — vendi un oggetto\n"
+            f"`{PREFIX}sellall` — vendi tutto l'inventario"
+        ),
+        inline=False,
+    )
+
+    embed.add_field(
+        name="🛒 Shop",
+        value=f"`{PREFIX}shop` — apri lo shop delle box",
+        inline=False,
+    )
+
+    embed.add_field(
+        name="🎮 Giochi",
+        value=(
+            f"`{PREFIX}coinflip <importo> <testa|croce>` — lancia una moneta\n"
+            f"`{PREFIX}roulette <importo> <rosso|nero|numero>` — roulette\n"
+            f"`{PREFIX}blackjack <importo>` — blackjack contro il bot\n"
+            f"`{PREFIX}tris [avversario]` — tris contro un utente o il bot"
+        ),
+        inline=False,
+    )
+
+    if ADMIN_ROLE_IDS or ctx.author.guild_permissions.administrator:
+        embed.add_field(
+            name="🛠️ Admin",
+            value=(
+                f"`{PREFIX}add <utente> <importo>` — aggiungi monete\n"
+                f"`{PREFIX}remove <utente> <importo>` — rimuovi monete"
+            ),
+            inline=False,
+        )
+
+    embed.set_footer(text=f"{BOT_NAME} • Usa {PREFIX}help oppure /help")
+    await ctx.send(embed=embed)
 
 
 # =====================================================================
